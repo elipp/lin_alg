@@ -1,4 +1,4 @@
-CC = g++
+CC = g++ -march=native
 CFLAGS = -c -fPIC -Wall -g -O2
 BUILDDIR=build
 

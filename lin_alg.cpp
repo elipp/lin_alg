@@ -1,4 +1,4 @@
-#include "lin_alg.h"
+#include "./lin_alg.h"
 
 static const __m128 ZERO = _mm_setzero_ps();
 static const __m128 MINUS_ONES = _mm_set_ps(1.0, -1.0, -1.0, -1.0);
@@ -838,7 +838,7 @@ mat4 Quaternion::toRotationMatrix() const {
 	static const __m128 sgnmaskL0 = _mm_castsi128_ps(_mm_setr_epi32(PLUS, MINUS, PLUS, MINUS));
 	static const __m128 sgnmaskL1 = _mm_castsi128_ps(_mm_setr_epi32(PLUS, PLUS, MINUS, MINUS));
 	static const __m128 sgnmaskL2 = _mm_castsi128_ps(_mm_setr_epi32(MINUS, PLUS, PLUS, MINUS));
-	static const __m128 sgnmaskL3 = _mm_castsi128_ps(_mm_setr_epi32(PLUS, PLUS, PLUS, PLUS));
+	//static const __m128 sgnmaskL3 = _mm_castsi128_ps(_mm_setr_epi32(PLUS, PLUS, PLUS, PLUS));
 
 	static const __m128 sgnmaskR0 = _mm_castsi128_ps(_mm_setr_epi32(PLUS, MINUS, PLUS, PLUS));
 	static const __m128 sgnmaskR1 = _mm_castsi128_ps(_mm_setr_epi32(PLUS, PLUS, MINUS, PLUS));

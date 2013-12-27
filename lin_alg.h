@@ -34,29 +34,35 @@
 
 #define ALIGNED16(decl) BEGIN_ALIGN16 decl END_ALIGN16
 
-#define DEFINE_ALIGNED_MALLOC_FREE_MEMBERS \
-	void *operator new(size_t size)\
-	{\
-		void *p;\
-		ALIGNED_MALLOC16(p, size);\
-		return p;\
-	}\
-	void *operator new[](size_t size) {\
-		void *p;\
-		ALIGNED_MALLOC16(p, size);\
-		return p;\
-	}\
-		void operator delete(void *p) {\
-		ALIGNED_FREE(p);\
-	}\
-		void operator delete[](void *p) {\
-		ALIGNED_FREE(p);\
-	}\
-
-
 class vec4;
 class mat4;
 class Quaternion;
+
+BEGIN_ALIGN16
+class lin_alg_aligned16_base {
+
+	public:
+	void *operator new(size_t size) {
+		void *p;
+		ALIGNED_MALLOC16(p, size);
+		return p;
+	}
+
+	void *operator new[](size_t size) {
+		void *p;
+		ALIGNED_MALLOC16(p, size);
+		return p;
+	}
+
+	void operator delete(void *p) {
+		ALIGNED_FREE(p);
+	}
+
+	void operator delete[](void *p) {
+		ALIGNED_FREE(p);
+	}
+
+} END_ALIGN16;
 
 inline std::ostream &operator<<(std::ostream &out, const __m128 &m) {
 	char buffer[128];
@@ -122,8 +128,8 @@ __m128 dot3x4_notranspose(const mat4 &M, const vec4 &v);
 
 __m128 dot4x4_notranspose(const mat4 &M, const vec4 &v);
 
-BEGIN_ALIGN16
-class vec4 {		
+class vec4 : public lin_alg_aligned16_base {
+
 public:
 	__m128 data;
 
@@ -182,13 +188,9 @@ public:
 
 	mat4 toTranslationMatrix() const;
 	
-	//_DEFINE_ALIGNED_MALLOC_FREE_MEMBERS;
-
-}
-END_ALIGN16;
+};
 
 vec4 operator*(float scalar, const vec4& v);	// convenience overload :P
-
 
 float dot3(const vec4 &a, const vec4 &b);
 float dot4(const vec4 &a, const vec4 &b);
@@ -201,8 +203,7 @@ inline bool roughly_equal(const vec4 &a, const vec4 &b, float margin) {
 }
 
 
-BEGIN_ALIGN16 
-class mat4 {	// column major 
+class mat4 : public lin_alg_aligned16_base {	// column major 
 	
 public:
 	__m128 data[4];	// each holds a column vector
@@ -252,9 +253,7 @@ public:
 	friend mat4 operator*(float scalar, const mat4& m);
 	friend float det(const mat4 &m);
 
-	//_DEFINE_ALIGNED_MALLOC_FREE_MEMBERS;
-
-} END_ALIGN16;
+};
 
 mat4 abs(const mat4 &m);
 mat4 operator*(float scalar, const mat4& m);
@@ -267,8 +266,7 @@ namespace Q {
 	enum {x = 0, y = 1, z = 2, w = 3};
 };
 
-BEGIN_ALIGN16 
-class Quaternion {
+class Quaternion : public lin_alg_aligned16_base { 
 public:
 	__m128 data;
 
@@ -302,41 +300,54 @@ public:
 
 	friend Quaternion operator*(float scalar, const Quaternion &q);
 
-	//_DEFINE_ALIGNED_MALLOC_FREE_MEMBERS;
-
-} END_ALIGN16;
+};
 
 Quaternion operator*(float scalar, const Quaternion &q);
 
 // these are pretty useful for when there's need to manipulate many of the data fields in a __m128
 
 BEGIN_ALIGN16
-struct float_arr_vec4 {
-	ALIGNED16(float f[4]);
+struct float_arr_vec4 : public lin_alg_aligned16_base {
+	union { 
+		__m128 m;
+		float f[4];
+	} data;
+
 	inline void operator=(const vec4 &v) {
-		_mm_store_ps(f, v.getData());
+		_mm_store_ps(data.f, v.getData());
 	}
+
 	float_arr_vec4(const vec4 &v) {
-		_mm_store_ps(f, v.getData());
+		_mm_store_ps(data.f, v.getData());
 	}
-	inline float operator()(int col) const { return f[col]; }
-	vec4 as_vec4() const { return vec4(_mm_load_ps(f)); }
+
+	inline float operator()(int col) const { return data.f[col]; }
+	vec4 as_vec4() const { return vec4(_mm_load_ps(data.f)); }
+
 } END_ALIGN16;
 
 BEGIN_ALIGN16 
-struct float_arr_mat4 {
-	ALIGNED16(float f[16]);
+struct float_arr_mat4 : public lin_alg_aligned16_base {
+
+	union {
+		__m128 m[4];
+		float f[16];
+	} data;
+
 	inline void operator=(const mat4 &m) {
-		memcpy(f, m.rawData(), 16*sizeof(float));
-	}
-	float_arr_mat4(const mat4 &m) {
-		memcpy(f, m.rawData(), 16*sizeof(float));
+		memcpy(data.f, m.rawData(), 16*sizeof(float));
 	}
 
-	inline float& operator()(int col, int row) { return f[4*col + row]; }
-	mat4 as_mat4() const { 
-		return mat4(f);
+	float_arr_mat4(const mat4 &m) {
+		memcpy(data.f, m.rawData(), 16*sizeof(float));
 	}
+
+	inline float& operator()(int col, int row) { return data.f[4*col + row]; }
+
+	mat4 as_mat4() const { 
+		return mat4(data.f);
+	}
+
 } END_ALIGN16;
 
 
