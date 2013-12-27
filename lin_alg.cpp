@@ -391,16 +391,14 @@ mat4 mat4::operator* (const mat4& R) const {
 
 vec4 mat4::operator* (const vec4& R) const {
 
-	// try with temporary mat4? :P
-	// result: performs better (with optimizations disabled at least)
-	//const mat4 M = (*this).transposed();
-	const mat4 M = (*this);
+
 /*	ALIGNED16(float tmp[4]);	// represents a temporary column
 
 	for (int i = 0; i < 4; i++) {
 		tmp[i] = MM_DPPS_XYZW(M.data[i], R.getData());
 	}*/
 
+	const mat4 M = (*this);
 	return vec4(dot4x4_notranspose(M, R));
 }
 
@@ -512,25 +510,9 @@ mat4 mat4::proj_persp(float fov_radians, float aspect, float zNear, float zFar) 
 // performs an "in-place transposition" of the matrix
 
 void mat4::transpose() {
-
-	_MM_TRANSPOSE4_PS(data[0], data[1], data[2], data[3]);	// microsoft special in-place transpose macro :P
-
-	/* Implemented as follows: (xmmintrin.h) (no copyright though)
-#define _MM_TRANSPOSE4_PS(row0, row1, row2, row3) {                 \
-            __m128 tmp3, tmp2, tmp1, tmp0;                          \
-                                                                    \
-            tmp0   = _mm_shuffle_ps((row0), (row1), 0x44);          \
-            tmp2   = _mm_shuffle_ps((row0), (row1), 0xEE);          \
-            tmp1   = _mm_shuffle_ps((row2), (row3), 0x44);          \
-            tmp3   = _mm_shuffle_ps((row2), (row3), 0xEE);          \
-                                                                    \
-            (row0) = _mm_shuffle_ps(tmp0, tmp1, 0x88);              \
-            (row1) = _mm_shuffle_ps(tmp0, tmp1, 0xDD);              \
-            (row2) = _mm_shuffle_ps(tmp2, tmp3, 0x88);              \
-            (row3) = _mm_shuffle_ps(tmp2, tmp3, 0xDD);              \
-        }
-	*/
-
+	// microsoft special in-place transpose macro :P
+	_MM_TRANSPOSE4_PS(data[0], data[1], data[2], data[3]);	
+	
 }
 
 mat4 mat4::transposed() const {
@@ -551,6 +533,7 @@ mat4 mat4::inverted() const {
 
 	mat4 m = this->transposed();
 	__m128 minor0, minor1, minor2, minor3;
+
 	// _mm_shuffle_pd(a, a, 1) can be used to swap the hi/lo qwords of a __m128d,
 	// and _mm_shuffle_ps(a, a, 0x4E) for a __m128
 
@@ -661,8 +644,8 @@ float det(const mat4 &m) {
 	
 	// just took the intel inverse routine, recursively identified the dependencies of "__m128 det",
 	// and stripped any assignments that didn't involve those dependencies :P
-	// that said, i'm "ninety-nine point nine nine nine nine nine NINE percent sure" this 
-	// isn't the fastest way to compute a 4x4 determinant
+	// i'm "ninety-nine point nine nine nine nine nine NINE percent sure" this 
+	// isn't the fastest way to compute a 4x4 determinant though :D
 
 	tmp1 = _mm_mul_ps(row2, row3);
 	tmp1 = _mm_shuffle_ps(tmp1, tmp1, 0xB1);
@@ -718,7 +701,6 @@ mat4 mat4::translate(const vec4 &v) {
 
 
 mat4 abs(const mat4 &m) {
-	// might seem a bit funny, but it's actually used in the OBB SAT cdetection code
 	static const __m128 mask = _mm_castsi128_ps(_mm_set1_epi32(0x80000000));
 	return mat4(vec4(_mm_andnot_ps(mask, m.column(0).getData())),
 				vec4(_mm_andnot_ps(mask, m.column(1).getData())),

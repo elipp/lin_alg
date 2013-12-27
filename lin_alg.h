@@ -196,7 +196,7 @@ float dot3(const vec4 &a, const vec4 &b);
 float dot4(const vec4 &a, const vec4 &b);
 vec4 abs(const vec4 &a);
 
-vec4 cross(const vec4 &a,  const vec4 &b);	// not really vec4, since cross product for such vectors isn't defined
+vec4 cross(const vec4 &a, const vec4 &b); // cross product for vec4? more like vec3 :P	
 
 inline bool roughly_equal(const vec4 &a, const vec4 &b, float margin) {
 	return ((a - b).length4_squared() < margin);
@@ -225,7 +225,10 @@ public:
 	mat4(const vec4& c1, const vec4& c2, const vec4& c3, const vec4& c4);
 	mat4(const __m128& c1, const __m128& c2, const __m128& c3, const __m128& c4);
 
-	mat4 &operator=(const mat4 &M) { memcpy(&this->data[0], &M.data[0], 4*sizeof(__m128)); return *this; }
+	mat4 &operator=(const mat4 &M) { 
+		memcpy(&this->data[0], &M.data[0], 4*sizeof(__m128)); 
+		return *this; 
+	}
 
 	inline void assign(int col, int row, float val) { assign_to_field(data[col], row, val); }
 	inline float operator()(int col, int row) const { return get_field(data[col], row); }
@@ -271,7 +274,7 @@ public:
 	__m128 data;
 
 	Quaternion(float x, float y, float z, float w);
-	Quaternion(const __m128 d) { data = d;};
+	Quaternion(const __m128 d) { data = d; };
 	Quaternion();
 	
 	inline void assign(int col, float val) { assign_to_field(data, col, val); }
@@ -293,8 +296,6 @@ public:
 	void operator+=(const Quaternion &b);
 	Quaternion operator+(const Quaternion& b) const;
 
-	//vec4 operator*(const vec4& b) const;
-	
 	static Quaternion fromAxisAngle(float x, float y, float z, float angle_radians);
 	mat4 toRotationMatrix() const;
 
@@ -305,7 +306,6 @@ public:
 Quaternion operator*(float scalar, const Quaternion &q);
 
 // these are pretty useful for when there's need to manipulate many of the data fields in a __m128
-
 BEGIN_ALIGN16
 struct float_arr_vec4 : public lin_alg_aligned16_base {
 	union { 
@@ -349,6 +349,5 @@ struct float_arr_mat4 : public lin_alg_aligned16_base {
 	}
 
 } END_ALIGN16;
-
 
 #endif
