@@ -164,10 +164,10 @@ const char* checkCPUCapabilities() {
 	return "Using SSE1 for dot product computation.\n";
 }
 
-vec4::vec4(float _x, float _y, float _z, float _w) {
+vec4::vec4(float px, float py, float pz, float pw) {
 	// must use _mm_setr_ps for this constructor. Note 'r' for reversed.
-	//data = _mm_setr_ps(_x, _y, _z, _w);
-	data = _mm_set_ps(_w, _z, _y, _x);	// could be faster, haven't tested
+	//data = _mm_setr_ps(px, py, pz, pw);
+	data = _mm_set_ps(pw, pz, py, px);	// could be faster, haven't tested
 
 }
 

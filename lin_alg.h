@@ -140,7 +140,7 @@ public:
 	// this is necessary for the mat4 class calls
 	inline __m128 getData() const { return data; }
 	vec4() {};
-	vec4(float _x, float _y, float _z, float _w);	
+	vec4(float px, float py, float pz, float pw);	
 	vec4(const float * const a);
 
 	inline void assign(int col, const float val) {
@@ -319,6 +319,10 @@ struct float_arr_vec4 : public lin_alg_aligned16_base {
 
 	float_arr_vec4(const vec4 &v) {
 		_mm_store_ps(data.f, v.getData());
+	}
+
+	float_arr_vec4(float px, float py, float pz, float pw) {
+		data.m = _mm_set_ps(pw, pz, py, px);	// could be faster, haven't tested
 	}
 
 	inline float operator()(int col) const { return data.f[col]; }
